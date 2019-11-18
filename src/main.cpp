@@ -29,6 +29,8 @@ void setup () {   // The stepper motor used in the IO pin is set to output
     setupMotors();
 
 	penStepperX.setTargetPosition(30);
+
+	penServo.setTargetPosition(22);
 }
 
 char line[100];
@@ -39,6 +41,13 @@ void loop () {
 	Serial.print("Position X: ");
 	Serial.print(penStepperX.getPosition(), 10);
 	Serial.println();
+
+	if (penStepperX.getPosition() == penStepperX.getTargetPosition() && penStepperX.getPosition() >= 20) {
+		penServo.setTargetPosition(0);
+
+		penStepperX.setSpeed(60);
+		penStepperX.setTargetPosition(10);
+	}
 
 	// printEmoticons();
 
