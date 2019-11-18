@@ -34,7 +34,6 @@ public:
     void enable() override;
     bool enabled() override;
     bool moving() override;
-    bool moving() override;
 };
 
 #endif // _HPP_PENSTEPPER
