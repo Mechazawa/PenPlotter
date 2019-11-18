@@ -14,7 +14,7 @@ PenStepper::PenStepper(unsigned char stepPin, unsigned char directionPin, unsign
 }
 
 Milimeter PenStepper::getPosition() {
-    return position;
+    return (Milimeter)steps / stepsPerMM;
 }
 
 Milimeter PenStepper::getTargetPosition() {
@@ -22,14 +22,14 @@ Milimeter PenStepper::getTargetPosition() {
 }
 
 unsigned int PenStepper::getStepsLeft() {
-    return abs(position - targetPosition) * stepsPerMM;
+    return round(abs(steps - (targetPosition * stepsPerMM)));
 }
 
-void PenStepper::setTargetPosition(Milimeter position, bool relative) {
+void PenStepper::setTargetPosition(Milimeter input, bool relative) {
     if (relative && homed()) {
-        targetPosition = position + getPosition();
+        targetPosition = input + getPosition();
     } else {
-        targetPosition = position;
+        targetPosition = input;
     }
 }
 
@@ -49,11 +49,11 @@ void PenStepper::tick(unsigned long ms) {
     unsigned int stepsLeft = getStepsLeft();
 
     if (stepsLeft == 0) {
-        position = targetPosition;
+        targetPosition = steps / stepsPerMM;
         return;
     }
 
-    unsigned char targetDirection = position < targetPosition ? 1 : 0;
+    unsigned char targetDirection = steps < (stepsPerMM * targetPosition) ? 1 : 0;
     unsigned int stepDelay = 1000000 / (travelSpeed * stepsPerMM);
 
     if (targetDirection == currentDirection) {
@@ -62,17 +62,9 @@ void PenStepper::tick(unsigned long ms) {
             lastStep = ms;
 
             if (currentDirection) {
-                position += (double)0.5 / stepsPerMM;
-                
-                if (position > targetPosition) {
-                    position = targetPosition;
-                }
+                steps++;
             } else {
-                position -= (double)0.5 / stepsPerMM;
-                
-                if (position < targetPosition) {
-                    position = targetPosition;
-                }
+                steps--;
             }
         }
     } else {
@@ -91,13 +83,11 @@ void PenStepper::home() {
         delayMicroseconds (600);
     }
 
-    position = 0;
-
-    setTargetPosition(1);
+    steps = 0;
 }
 
 bool PenStepper::homed() {
-    return position >= 0;
+    return steps == 0;
 }
 
 void PenStepper::disable() {
@@ -117,4 +107,8 @@ void PenStepper::enable() {
 
 bool PenStepper::enabled() {
     return pullupPins[enablePin];
+}
+
+bool PenStepper::moving() {
+    return steps != (targetPosition * stepsPerMM);
 }

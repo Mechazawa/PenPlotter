@@ -41,6 +41,7 @@ public:
     void disable() override;
     void enable() override;
     bool enabled() override;
+    bool moving() override;
 };
 
 #endif // _HPP_PENSERVO

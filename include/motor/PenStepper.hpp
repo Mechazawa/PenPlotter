@@ -4,7 +4,7 @@
 #define _HPP_PENSTEPPER
 
 class PenStepper : public Motor {
-    Milimeter position;
+    short steps;
     Milimeter targetPosition;
     unsigned char stepPin;
     unsigned char directionPin;
@@ -33,6 +33,8 @@ public:
     void disable() override;
     void enable() override;
     bool enabled() override;
+    bool moving() override;
+    bool moving() override;
 };
 
 #endif // _HPP_PENSTEPPER

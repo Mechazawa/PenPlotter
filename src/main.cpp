@@ -30,7 +30,7 @@ void setup () {   // The stepper motor used in the IO pin is set to output
 
 	penStepperX.setTargetPosition(30);
 
-	penServo.setTargetPosition(22);
+	penServo.setTargetPosition(20.1);
 }
 
 char line[100];
@@ -45,8 +45,8 @@ void loop () {
 	if (penStepperX.getPosition() == penStepperX.getTargetPosition() && penStepperX.getPosition() >= 20) {
 		penServo.setTargetPosition(0);
 
-		penStepperX.setSpeed(60);
-		penStepperX.setTargetPosition(10);
+		// penStepperX.setSpeed(60);
+		// penStepperX.setTargetPosition(10);
 	}
 
 	// printEmoticons();

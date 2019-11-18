@@ -125,3 +125,7 @@ void PenServo::enable() {
 bool PenServo::enabled() {
     return servo.attached();
 }
+
+bool PenServo::moving() {
+    return angle != lastAngle;
+}

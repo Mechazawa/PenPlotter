@@ -18,6 +18,7 @@ public:
     virtual void disable();
     virtual void enable();
     virtual bool enabled();
+    virtual bool moving();
 };
 
 #endif // _HPP_MOTOR
