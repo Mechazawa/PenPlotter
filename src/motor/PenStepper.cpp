@@ -68,7 +68,7 @@ void PenStepper::tick(unsigned long ms) {
             }
         }
     } else {
-        lastStep = stepDelay + ms - 50; 
+        lastStep = stepDelay + ms - 50; // just wait 50ms
         digitalWrite (directionPin, currentDirection = targetDirection);
     }
 }
@@ -92,6 +92,8 @@ bool PenStepper::homed() {
 
 void PenStepper::disable() {
     digitalWrite (enablePin, HIGH);
+    
+    targetPosition = steps / stepsPerMM;
 
     pullupPins[enablePin] = false;
 }

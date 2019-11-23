@@ -2,6 +2,13 @@
 #include "commandReader.h"
 #include "motor/PenServo.hpp"
 #include "motor/PenStepper.hpp"
+// #include "Wire.h"
+// #include <hd44780.h>                       // main hd44780 header
+// #include <hd44780ioClass/hd44780_I2Cexp.h> // i2c expander i/o class header
+
+// hd44780_I2Cexp lcd; // declare lcd object: auto locate & auto config expander chip
+
+//https://en.wikipedia.org/wiki/Plotutils
 
 // The following is a simple stepper motor control procedures
 # define EN 8 // stepper motor enable , active low
@@ -12,55 +19,47 @@
 # define Y_STP 3 // y -axis stepper control
 # define Z_STP 4 // z -axis stepper control
 
-#define STEP_DELAY_MS 200
-
-PenServo penServo(Z_STP, 90, 0.6, true);
+PenServo penServo(12, 90, 0.6, true);
 PenStepper penStepperX(X_STP, X_DIR, 27);
+PenStepper penStepperY(Z_STP, Y_DIR, 27);
 
 void setupMotors() {
 	penStepperX.enable();
+	penStepperY.enable();
 	penServo.enable();
 
 	penStepperX.home();
+	penStepperY.home();
 	penServo.home();
 }
 
-void setup () {   // The stepper motor used in the IO pin is set to output
+void setup () { 
+	// The stepper motor used in the IO pin is set to output
     setupMotors();
 
-	penStepperX.setTargetPosition(30);
-
-	penServo.setTargetPosition(20.1);
+	penStepperY.setSpeed(20);
+	penServo.setTargetPosition(19);
 }
 
-char line[100];
-
 void loop () {
-	penStepperX.tick(micros());
-	
-	Serial.print("Position X: ");
-	Serial.print(penStepperX.getPosition(), 10);
-	Serial.println();
+	unsigned long ms = micros();
 
-	if (penStepperX.getPosition() == penStepperX.getTargetPosition() && penStepperX.getPosition() >= 20) {
-		penServo.setTargetPosition(0);
+	penStepperX.tick(ms);
+	penStepperY.tick(ms);
 
-		// penStepperX.setSpeed(60);
-		// penStepperX.setTargetPosition(10);
+	if (penServo.getTargetPosition() == penServo.getPosition() && penServo.getPosition() > 10 && penStepperX.homed()) {
+		penStepperX.setTargetPosition(20);
+		penStepperY.setTargetPosition(60);
 	}
 
-	// printEmoticons();
+	if (penStepperY.getPosition() == penStepperY.getTargetPosition() && penStepperY.getPosition() >= 20) {
+		penStepperX.setTargetPosition(40);
+	}
 
-	// penServo.move(20, 0);
-	// delay(1000);
-	// penServo.move(0, 0);
-	// delay(1000);
+	if	(penStepperX.getPosition() > 39) {
+		penServo.setTargetPosition(0);
 
-	// Serial.println("Step");
-	// servo.write(40); 
-    // step (false, X_DIR, X_STP, 400, 1); // X axis motor reverse 1 ring, the 200 step is a circle.
-    // step (false, Y_DIR, Y_STP, 400, 1); // X axis motor reverse 1 ring, the 200 step is a circle.
-	// servo.write(0); 
-	// step (true, X_DIR, X_STP, 400, 1); // X axis motor forward 1 laps, the 200 step is a circle.
-	// step (true, Y_DIR, Y_STP, 400, 1); // X axis motor forward 1 laps, the 200 step is a circle.
+		penStepperX.disable();
+		penStepperY.disable();
+	}
 } 
