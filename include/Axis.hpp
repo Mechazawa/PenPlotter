@@ -8,7 +8,7 @@ typedef struct MotorNode {
 } MotorNode;
 
 typedef struct Movement {
-    Position position;
+    Position* position;
     Milimeter unitsPerSecond;
 } Movement;
 
@@ -36,11 +36,12 @@ public:
     void tick();
 
     // @todo make position a pointer?
-    bool pushMove(Position position, Milimeter unitsPerSecond);
+    bool pushMove(Position* position, Milimeter unitsPerSecond);
     
     unsigned short getStackSize();
     unsigned short getMaxStackSize();
     void setMaxStackSize(unsigned short size);
+    bool moving();
 };
 
 #endif // _HPP_Axis

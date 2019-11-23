@@ -2,6 +2,8 @@
 #include "commandReader.h"
 #include "motor/PenServo.hpp"
 #include "motor/PenStepper.hpp"
+#include "Position.hpp"
+#include "Axis.hpp"
 // #include "Wire.h"
 // #include <hd44780.h>                       // main hd44780 header
 // #include <hd44780ioClass/hd44780_I2Cexp.h> // i2c expander i/o class header
@@ -22,6 +24,7 @@
 PenServo penServo(12, 90, 0.6, true);
 PenStepper penStepperX(X_STP, X_DIR, 27);
 PenStepper penStepperY(Z_STP, Y_DIR, 27);
+Axis axis;
 
 void setupMotors() {
 	penStepperX.enable();
@@ -31,35 +34,74 @@ void setupMotors() {
 	penStepperX.home();
 	penStepperY.home();
 	penServo.home();
+
+	axis.setMotor('X', &penStepperX);
+	axis.setMotor('Y', &penStepperY);
+	axis.setMotor('Z', &penServo);
+}
+
+const char* moves = ""
+"X10 Y10;"
+""
+"Z19;"
+"X30;"
+"Y30;"
+"X10;"
+"Y10;"
+"Z0;"
+""
+"Z19;"
+"X25;"
+"Y25;"
+"X15;"
+"Y15;"
+"Z0;"
+""
+"X0 Y0;";
+
+void initMoves(Milimeter speed = 20) {
+	Position* position = new Position;
+	int i = 0;
+	char curAxis = 'X';
+
+	while (char c = moves[i++]) {
+		if (c == ';') {
+			axis.pushMove(position, speed);
+		} else if (c >= '0' && c <= '9') {
+			Milimeter value = position->getAxis(curAxis);
+			
+			value *= 10;
+			value += c - '0';
+
+			position->setAxis(curAxis, value);
+		} else if (c >= 'A' && c <= 'Z') {
+			position->setAxis(curAxis = c, 0);
+		}
+	}
 }
 
 void setup () { 
 	// The stepper motor used in the IO pin is set to output
-    setupMotors();
 
-	penStepperY.setSpeed(20);
-	penServo.setTargetPosition(19);
+	axis.getMotor('X')->setTargetPosition(20);
+    setupMotors();
+	// initMoves();
+
+	// Position* pos = new Position;
+	// pos->setAxis('X', 20);
+	// pos->setAxis('Y', 20);
+
+	// axis.pushMove(pos, 20);
+
+	// good speed is 20-30
 }
 
 void loop () {
-	unsigned long ms = micros();
+	axis.tick();
 
-	penStepperX.tick(ms);
-	penStepperY.tick(ms);
-
-	if (penServo.getTargetPosition() == penServo.getPosition() && penServo.getPosition() > 10 && penStepperX.homed()) {
-		penStepperX.setTargetPosition(20);
-		penStepperY.setTargetPosition(60);
-	}
-
-	if (penStepperY.getPosition() == penStepperY.getTargetPosition() && penStepperY.getPosition() >= 20) {
-		penStepperX.setTargetPosition(40);
-	}
-
-	if	(penStepperX.getPosition() > 39) {
-		penServo.setTargetPosition(0);
-
-		penStepperX.disable();
-		penStepperY.disable();
-	}
+	// if (!axis.moving()) {
+	// 	penStepperX.disable();
+	// 	penStepperY.disable();
+	// 	penServo.disable();
+	// }
 } 

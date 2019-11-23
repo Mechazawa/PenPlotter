@@ -91,13 +91,25 @@ void Axis::tick(unsigned long ms) {
     }
 }
 
+bool Axis::moving() {
+    return activeAxisCount > 0;
+}
+
 void Axis::startNextMove() {
-    delete popMove();
+    Movement* lastMove = popMove();
+    delete lastMove->position;
+    delete lastMove;
+
     Movement* move = peekMove();
 
-    activeAxisCount = move->position.getAxisCount();
+    if (move == nullptr) {
+        activeAxisCount = 0;        
+        return;
+    }
+
+    activeAxisCount = move->position->getAxisCount();
     char axis[activeAxisCount];
-    move->position.listAxis(axis);
+    move->position->listAxis(axis);
 
     // Prepare motor lookup
     delete activeAxis;
@@ -114,7 +126,7 @@ void Axis::startNextMove() {
         activeAxis[i] = getMotor(axis[i]);
 
         // Set position
-        Milimeter axisPos = move->position.getAxis(axis[i]);
+        Milimeter axisPos = move->position->getAxis(axis[i]);
         activeAxis[i]->setTargetPosition(axisPos);
 
         distances[i] = abs(axisPos - activeAxis[i]->getPosition());;
@@ -133,7 +145,7 @@ void Axis::tick() {
     tick(micros());
 }
 
-bool Axis::pushMove(Position position, Milimeter unitsPerSecond) {
+bool Axis::pushMove(Position* position, Milimeter unitsPerSecond) {
     if (head == tail && stack[tail]) {
         return false;
     }
