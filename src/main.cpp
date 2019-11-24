@@ -21,10 +21,10 @@
 # define Y_STP 3 // y -axis stepper control
 # define Z_STP 4 // z -axis stepper control
 
-PenServo penServo(12, 90, 0.6, true);
-PenStepper penStepperX(X_STP, X_DIR, 27);
-PenStepper penStepperY(Z_STP, Y_DIR, 27);
-Axis axis(64);
+PenServo penServo(12, 90, 60, true);
+PenStepper penStepperX(X_STP, X_DIR, 27*1.5);
+PenStepper penStepperY(Z_STP, Y_DIR, 27*1.5);
+Axis axis(128);
 
 void setupMotors(bool home = true) {
 	penStepperX.enable();
@@ -42,24 +42,27 @@ void setupMotors(bool home = true) {
 	axis.setMotor('Z', &penServo);
 }
 
-const char* moves = "Z0;"
-"X10 Y10;"
-""
-"Z18;"
-"X30;"
-"Y30;"
-"X10;"
-"Y10;"
-"Z0;"
-""
-"Z18;"
-"X25;"
-"Y25;"
-"X15;"
-"Y15;"
-"Z0;"
-""
-"X0 Y0;";
+// const char* moves = "Z0;"
+// "X10 Y10;"
+// ""
+// "Z18.;"
+// "X30;"
+// "Y30;"
+// "X10;"
+// "Y10;"
+// "Z0;"
+// ""
+// "X25;"
+// "Z18.;"
+// "Y25;"
+// "X15;"
+// "Y15;"
+// "X25;"
+// "Z0;"
+// ""
+// "X0 Y0;";
+
+const char* moves = "U;X16 Y23;D;X16 Y24;X14. Y25;X12. Y27;X10 Y27;X7. Y27;X5. Y26;X3. Y25;X2 Y23;X1. Y20;X2 Y18;X2. Y16;X3. Y13;X5 Y11;X6. Y10;X8. Y8;X10. Y7;X12 Y5;X14 Y3;X15. Y2;X17. Y3;X19. Y5;X21 Y6;X23 Y8;X25 Y9;X26. Y11;X28 Y13;X29 Y15;X30 Y18;X30 Y20;X29. Y22;X28. Y25;X26. Y26;X24. Y27;X22 Y27;X19. Y27;X17. Y25;X16 Y24;U;X30Y30;";
 
 void initMoves(Milimeter speed = 20) {
 	Position* position = new Position;
@@ -78,8 +81,15 @@ void initMoves(Milimeter speed = 20) {
 			value += c - '0';
 
 			position->setAxis(curAxis, value);
+		} else if (c == 'U') {
+			position->setAxis('Z', 0);
+		} else if (c == 'D') {
+			position->setAxis('Z', 19.4);
 		} else if (c >= 'A' && c <= 'Z') {
 			position->setAxis(curAxis = c, 0);
+		} else if (c == '.') {
+			Milimeter value = position->getAxis(curAxis);
+			position->setAxis(curAxis, value + 0.5);
 		}
 	}
 }
@@ -113,9 +123,9 @@ void setup () {
 void loop () {
 	axis.tick();
 
-	// if (!axis.moving()) {
-	// 	penStepperX.disable();
-	// 	penStepperY.disable();
-	// 	penServo.disable();
-	// }
+	if (!axis.moving()) {
+		penStepperX.disable();
+		penStepperY.disable();
+		penServo.disable();
+	}
 } 

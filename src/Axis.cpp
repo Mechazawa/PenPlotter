@@ -2,7 +2,14 @@
 #include "Position.hpp"
 #include "Axis.hpp"
 #include "Arduino.h"
-#define diff(x, y) (x > y ? x - y : y - x)
+
+float diff(float a, float b) {
+    if (a > b) {
+        return a - b;
+    }
+    
+    return b - a;
+}
 
 Axis::Axis(unsigned short stackSize) {
     setMaxStackSize(stackSize);
@@ -141,7 +148,15 @@ void Axis::startNextMove() {
         Milimeter axisPos = move->position->getAxis(axis[i]);
         activeAxis[i]->setTargetPosition(axisPos);
 
+        Serial.print(axis[i]);
+        Serial.print(": ");
+        Serial.print(axisPos, 10);
+
         distances[i] = diff(axisPos, activeAxis[i]->getPosition());
+
+        Serial.print(" => ");
+        Serial.println(distances[i], 10);
+
         totalDistance += pow(distances[i], 2);
     }
 

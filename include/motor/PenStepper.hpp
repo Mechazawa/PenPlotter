@@ -10,7 +10,7 @@ class PenStepper : public Motor {
     unsigned char directionPin;
     unsigned char enablePin;
     unsigned short stepsPerMM;
-    Milimeter travelSpeed = 1;
+    Milimeter travelSpeed = 10;
 
     unsigned char currentDirection = 0;
     unsigned long lastStep;

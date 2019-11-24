@@ -17,7 +17,7 @@ Milimeter PenServo::getPosition() {
         return angle;
     }
 
-    int diff = abs(angle - lastAngle);
+    int diff = angle > lastAngle ? angle - lastAngle : lastAngle - angle;
     float moveTime = (micros() - lastMove) / 1000000;
     Milimeter progress = diff * (moveTime / fullRotationTime);
     Milimeter position = progress + angle;
@@ -52,6 +52,8 @@ void PenServo::setAngle(int targetAngle) {
     lastAngle = angle;
     servo.write(angle = targetAngle);
     lastMove = micros();
+    // @todo hack
+    delay(500);
 }
 
 int PenServo::getMaxAngle() {
