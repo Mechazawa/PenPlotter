@@ -4,7 +4,7 @@
 void Position::setAxis(char axis, Milimeter position) {
     PositionNode* curr = positions;
 
-    while (curr) {
+    while (curr != nullptr) {
         if (curr->axis == axis) {
             curr->position = position;
 
@@ -25,7 +25,7 @@ void Position::setAxis(char axis, Milimeter position) {
 Milimeter Position::getAxis(char axis) {
     PositionNode* curr = positions;
 
-    while (curr) {
+    while (curr != nullptr) {
         if (curr->axis == axis) {
             return curr->position;
         }
@@ -48,13 +48,15 @@ bool Position::delAxis(char axis){
 
     PositionNode* last;
 
-    while ((last = curr) && (curr = curr->next)) {
+    while ((curr = curr->next) != nullptr) {
         if (curr->axis == axis) {
             last->next = curr->next;
 
             delete curr;
             return true;
         }
+
+        last = curr;
     }
 
     return false;
@@ -64,7 +66,7 @@ bool Position::delAxis(char axis){
 bool Position::hasAxis(char axis){
     PositionNode* last = this->positions;
 
-    while (last) {
+    while (last != nullptr) {
         if (last->axis == axis) {
             return true;
         }
@@ -80,7 +82,7 @@ char Position::getAxisCount(){
 
     PositionNode* last = this->positions;
 
-    while (last) {
+    while (last != nullptr) {
         count++;
         last = last->next;
     }
@@ -89,10 +91,10 @@ char Position::getAxisCount(){
 }
 
 void Position::listAxis(char* output) {
-    char index = 0;
+    int index = 0;
     PositionNode* last = this->positions;
 
-    while (last) {
+    while (last != nullptr) {
         output[index] = last->axis;
         last = last->next;
 

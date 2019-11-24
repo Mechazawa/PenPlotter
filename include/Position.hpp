@@ -4,7 +4,7 @@
 typedef struct PositionNode{
     char axis;
     Milimeter position; 
-    struct PositionNode* next;
+    struct PositionNode* next = nullptr;
 } PositionNode;
 
 class Position {

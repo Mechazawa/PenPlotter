@@ -24,33 +24,35 @@
 PenServo penServo(12, 90, 0.6, true);
 PenStepper penStepperX(X_STP, X_DIR, 27);
 PenStepper penStepperY(Z_STP, Y_DIR, 27);
-Axis axis;
+Axis axis(64);
 
-void setupMotors() {
+void setupMotors(bool home = true) {
 	penStepperX.enable();
 	penStepperY.enable();
 	penServo.enable();
 
-	penStepperX.home();
-	penStepperY.home();
-	penServo.home();
+	if (home) {
+		penStepperX.home();
+		penStepperY.home();
+		penServo.home();
+	}
 
 	axis.setMotor('X', &penStepperX);
 	axis.setMotor('Y', &penStepperY);
 	axis.setMotor('Z', &penServo);
 }
 
-const char* moves = ""
+const char* moves = "Z0;"
 "X10 Y10;"
 ""
-"Z19;"
+"Z18;"
 "X30;"
 "Y30;"
 "X10;"
 "Y10;"
 "Z0;"
 ""
-"Z19;"
+"Z18;"
 "X25;"
 "Y25;"
 "X15;"
@@ -67,6 +69,8 @@ void initMoves(Milimeter speed = 20) {
 	while (char c = moves[i++]) {
 		if (c == ';') {
 			axis.pushMove(position, speed);
+
+			position = new Position;
 		} else if (c >= '0' && c <= '9') {
 			Milimeter value = position->getAxis(curAxis);
 			
@@ -82,10 +86,9 @@ void initMoves(Milimeter speed = 20) {
 
 void setup () { 
 	// The stepper motor used in the IO pin is set to output
-
-	axis.getMotor('X')->setTargetPosition(20);
+	delay(5000);
     setupMotors();
-	// initMoves();
+	initMoves();
 
 	// Position* pos = new Position;
 	// pos->setAxis('X', 20);
@@ -94,6 +97,17 @@ void setup () {
 	// axis.pushMove(pos, 20);
 
 	// good speed is 20-30
+
+	Serial.print("Moves: ");
+	Serial.print(axis.getStackSize(), 10);
+	Serial.println();
+
+	if(axis.hasMotor('X')) {
+		Serial.println("X motor registered");
+		Serial.print(axis.getMotor('X')->getTargetPosition(), 10);
+	} else {
+		Serial.println("X motor not found!");
+	}
 }
 
 void loop () {

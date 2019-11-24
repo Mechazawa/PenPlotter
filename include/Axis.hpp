@@ -4,7 +4,7 @@
 typedef struct MotorNode {
     Motor* motor;
     char axis;
-    MotorNode* next;
+    MotorNode* next = nullptr;
 } MotorNode;
 
 typedef struct Movement {
@@ -16,7 +16,7 @@ typedef struct Movement {
 class Axis {
     unsigned short tail = 0;
     unsigned short head = 0;
-    unsigned short stackSize = 64;
+    unsigned short stackSize = 0;
     Movement** stack;
     MotorNode* motors = nullptr;
     char activeAxisCount = 0;
@@ -27,6 +27,8 @@ class Axis {
 
     void startNextMove();
 public:
+    Axis(unsigned short stackSize = 64);
+    
     void setMotor(char axis, Motor* motor);
     bool deleteMotor(char axis);
     Motor* getMotor(char axis);
