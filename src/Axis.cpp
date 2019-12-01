@@ -92,7 +92,6 @@ void Axis::tick(unsigned long ms) {
     }
 
     if (done) {
-        Serial.println("Start next move");
         startNextMove();
     }
 }
@@ -102,79 +101,55 @@ bool Axis::moving() {
 }
 
 void Axis::startNextMove() {
-    Movement* lastMove = popMove();
-    delete lastMove->position;
-    delete lastMove;
+    if(currentMove != nullptr) {
+        Movement* lastMove = popMove();
+        delete lastMove->position;
+        delete lastMove;
+    }
 
-    Movement* move = peekMove();
+    currentMove = peekMove();
 
-    if (move == nullptr) {
+    if (currentMove == nullptr) {
         activeAxisCount = 0;   
-
-        Serial.println("Could't get next move");
 
         return;
     }
 
-    Serial.println("Getting axis info");
-    Serial.println(move->position->hasAxis('X') ? "Has X" : "No X");
-    Serial.println(move->position->hasAxis('Y') ? "Has Y" : "No Y");
-    Serial.println(move->position->hasAxis('Z') ? "Has Z" : "No Z");
-    activeAxisCount = move->position->getAxisCount();
-    Serial.print("Axiscount: ");
-    Serial.println(activeAxisCount, 10);
+    activeAxisCount = currentMove->position->getAxisCount();
 
     char axis[activeAxisCount];
-    move->position->listAxis(axis);
+    currentMove->position->listAxis(axis);
 
     // Prepare motor lookup
     delete activeAxis;
     activeAxis = new Motor*[activeAxisCount];
 
     if (activeAxisCount == 0) {
-        Serial.println("Nothing to move???");
         return;
     }
 
     Milimeter totalDistance = 0;
     Milimeter distances[activeAxisCount];
 
-    Serial.println("Gathering distance");
-
     for (int i = 0; i < activeAxisCount; i++) {
         activeAxis[i] = getMotor(axis[i]);
 
         // Set position
-        Milimeter axisPos = move->position->getAxis(axis[i]);
+        Milimeter axisPos = currentMove->position->getAxis(axis[i]);
         activeAxis[i]->setTargetPosition(axisPos);
-
-        Serial.print(axis[i]);
-        Serial.print(": ");
-        Serial.print(axisPos, 10);
 
         distances[i] = diff(axisPos, activeAxis[i]->getPosition());
 
-        Serial.print(" => ");
-        Serial.println(distances[i], 10);
-
-        totalDistance += pow(distances[i], 2);
+        totalDistance += powf(distances[i], 2);
     }
 
-    totalDistance = sqrt(totalDistance);
-    double time = totalDistance / move->unitsPerSecond;
+    totalDistance = totalDistance == 0 ? 0 : sqrtf(totalDistance);
+    double time = totalDistance / currentMove->unitsPerSecond;
 
     for (int i = 0; i < activeAxisCount; i++) {
-        activeAxis[i]->setSpeed(distances[i] / time);
-
-        Serial.print(distances[i], 10);
-        Serial.print(" => ");
-        Serial.println(distances[i]/time, 10);
+        Milimeter speed = time == 0 ? 0 : (distances[i] / time);
+        activeAxis[i]->setSpeed(speed);
     }
-
-    Serial.print("Total distance: ");
-    Serial.println(totalDistance, 10);
-    Serial.print("Time: ");
-    Serial.println(time, 10);
 } 
 
 void Axis::tick() {
@@ -183,7 +158,6 @@ void Axis::tick() {
 
 bool Axis::pushMove(Position* position, Milimeter unitsPerSecond) {
     if (stack[head] != nullptr) {
-        Serial.println("Move stack full!");
         return false;
     }
 
@@ -192,8 +166,6 @@ bool Axis::pushMove(Position* position, Milimeter unitsPerSecond) {
     stack[head]->unitsPerSecond = unitsPerSecond;
 
     head = (head + 1) % stackSize;
-
-    Serial.println("Push move");
 
     return true;
 }
@@ -207,6 +179,8 @@ Movement* Axis::popMove() {
 
     stack[tail] = nullptr;
     tail = (tail + 1) % stackSize;
+
+    Serial.println("POP");
 
     return out;
 }
@@ -232,7 +206,9 @@ unsigned short Axis::getMaxStackSize() {
 }
 
 void Axis::setMaxStackSize(unsigned short size) {
-    Movement* newStack[size];
+    Movement** newStack = new Movement*[size];
+
+    head = getStackSize();
 
     // Copy old stack and clean 
     for (unsigned short i = 0; i < size; i++) {
@@ -243,7 +219,11 @@ void Axis::setMaxStackSize(unsigned short size) {
         }
     }
 
-    delete stack;
+    if (stack != nullptr) {
+        delete stack;
+    }
+
+    tail = 0;
 
     stackSize = size;
     stack = newStack;

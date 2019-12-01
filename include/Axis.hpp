@@ -17,10 +17,11 @@ class Axis {
     unsigned short tail = 0;
     unsigned short head = 0;
     unsigned short stackSize = 0;
-    Movement** stack;
+    Movement** stack = nullptr;
     MotorNode* motors = nullptr;
     char activeAxisCount = 0;
     Motor** activeAxis = nullptr;
+    Movement * currentMove = nullptr;
 
     Movement* popMove();
     Movement* peekMove();

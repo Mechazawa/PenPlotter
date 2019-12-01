@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "commandReader.h"
+// #include "commandReader.h"
 #include "motor/PenServo.hpp"
 #include "motor/PenStepper.hpp"
 #include "Position.hpp"
@@ -21,10 +21,20 @@
 # define Y_STP 3 // y -axis stepper control
 # define Z_STP 4 // z -axis stepper control
 
-PenServo penServo(12, 90, 60, true);
-PenStepper penStepperX(X_STP, X_DIR, 27*1.5);
-PenStepper penStepperY(Z_STP, Y_DIR, 27*1.5);
-Axis axis(128);
+PenServo penServo(12, 90, 60);
+PenStepper penStepperX(X_STP, X_DIR, 30);
+PenStepper penStepperY(Z_STP, Y_DIR, 30);
+Axis axis(20); // 42 works
+
+void shutDownMotors() {
+	penStepperX.disable();
+	penStepperY.disable();
+	penServo.disable();
+
+	axis.deleteMotor('X');
+	axis.deleteMotor('Y');
+	axis.deleteMotor('Z');
+}
 
 void setupMotors(bool home = true) {
 	penStepperX.enable();
@@ -32,9 +42,9 @@ void setupMotors(bool home = true) {
 	penServo.enable();
 
 	if (home) {
+		penServo.home();
 		penStepperX.home();
 		penStepperY.home();
-		penServo.home();
 	}
 
 	axis.setMotor('X', &penStepperX);
@@ -42,27 +52,56 @@ void setupMotors(bool home = true) {
 	axis.setMotor('Z', &penServo);
 }
 
-// const char* moves = "Z0;"
-// "X10 Y10;"
-// ""
-// "Z18.;"
-// "X30;"
-// "Y30;"
-// "X10;"
-// "Y10;"
-// "Z0;"
-// ""
-// "X25;"
-// "Z18.;"
-// "Y25;"
-// "X15;"
-// "Y15;"
-// "X25;"
-// "Z0;"
-// ""
-// "X0 Y0;";
+// const char* moves = "U;X16 Y23;D;X16 Y24;X14. Y25;X12. Y27;X10 Y27;X7. Y27;X5. Y26;X3. Y25;X2 Y23;X1. Y20;X2 Y18;X2. Y16;X3. Y13;X5 Y11;X6. Y10;X8. Y8;X10. Y7;X12 Y5;X14 Y3;X15. Y2;X17. Y3;X19. Y5;X21 Y6;X23 Y8;X25 Y9;X26. Y11;X28 Y13;X29 Y15;X30 Y18;X30 Y20;X29. Y22;X28. Y25;X26. Y26;X24. Y27;X22 Y27;X19. Y27;X17. Y25;X16 Y24;U;X30Y30;";
+const char* moves = "U;X10Y10;D;X30Y30;Y10;X10;U;Y30X0;";
 
-const char* moves = "U;X16 Y23;D;X16 Y24;X14. Y25;X12. Y27;X10 Y27;X7. Y27;X5. Y26;X3. Y25;X2 Y23;X1. Y20;X2 Y18;X2. Y16;X3. Y13;X5 Y11;X6. Y10;X8. Y8;X10. Y7;X12 Y5;X14 Y3;X15. Y2;X17. Y3;X19. Y5;X21 Y6;X23 Y8;X25 Y9;X26. Y11;X28 Y13;X29 Y15;X30 Y18;X30 Y20;X29. Y22;X28. Y25;X26. Y26;X24. Y27;X22 Y27;X19. Y27;X17. Y25;X16 Y24;U;X30Y30;";
+void parseCommand(String command, Milimeter speed = 20) {
+	Serial.print("INPUT \"");
+	Serial.print(command);
+	Serial.println("\"");
+
+	Position* position = new Position;
+	char curAxis = 'X';
+
+	for(unsigned int i = 0; i < command.length(); i++) {
+		char c = command[i];
+
+		if (c >= '0' && c <= '9') {
+			Milimeter value = position->getAxis(curAxis);
+			
+			value *= 10;
+			value += c - '0';
+
+			position->setAxis(curAxis, value);
+		} else if (c == 'U') {
+			position->setAxis('Z', 0);
+		} else if (c == 'D') {
+			position->setAxis('Z', 7);
+		} else if (c >= 'A' && c <= 'Z') {
+			position->setAxis(curAxis = c, 0);
+		} else if (c == '.') {
+			Milimeter value = position->getAxis(curAxis);
+			position->setAxis(curAxis, value + 0.5);
+		} else if (c == '!') {
+			setupMotors();
+		} else if (c == '#') {
+			shutDownMotors();
+		}
+	}
+
+	if (axis.pushMove(position, speed)) {
+		Serial.print("OK ");
+	} else {
+		delete position;
+
+		Serial.print("FULL ");
+	}
+
+
+	Serial.print(axis.getMaxStackSize() - axis.getStackSize(), 10);
+	Serial.print("/");
+	Serial.println(axis.getMaxStackSize(), 10);
+}
 
 void initMoves(Milimeter speed = 20) {
 	Position* position = new Position;
@@ -71,7 +110,13 @@ void initMoves(Milimeter speed = 20) {
 
 	while (char c = moves[i++]) {
 		if (c == ';') {
-			axis.pushMove(position, speed);
+			if(!axis.pushMove(position, speed)) {
+				delete position;
+
+				Serial.println("FULL");
+
+				return;
+			};
 
 			position = new Position;
 		} else if (c >= '0' && c <= '9') {
@@ -84,7 +129,7 @@ void initMoves(Milimeter speed = 20) {
 		} else if (c == 'U') {
 			position->setAxis('Z', 0);
 		} else if (c == 'D') {
-			position->setAxis('Z', 19.4);
+			position->setAxis('Z', 45);
 		} else if (c >= 'A' && c <= 'Z') {
 			position->setAxis(curAxis = c, 0);
 		} else if (c == '.') {
@@ -94,11 +139,26 @@ void initMoves(Milimeter speed = 20) {
 	}
 }
 
+String commandLoopInput;
+void commandLoop() {;
+  if (Serial.available()) {
+	char c = Serial.read();
+
+	if (c == ';') {
+		parseCommand(commandLoopInput);
+
+		commandLoopInput = "";
+	} else {
+		commandLoopInput += c;
+	}
+  }
+}
+
 void setup () { 
+  	Serial.begin(9600);
 	// The stepper motor used in the IO pin is set to output
-	delay(5000);
+	delay(2000);
     setupMotors();
-	initMoves();
 
 	// Position* pos = new Position;
 	// pos->setAxis('X', 20);
@@ -107,25 +167,16 @@ void setup () {
 	// axis.pushMove(pos, 20);
 
 	// good speed is 20-30
-
-	Serial.print("Moves: ");
-	Serial.print(axis.getStackSize(), 10);
-	Serial.println();
-
-	if(axis.hasMotor('X')) {
-		Serial.println("X motor registered");
-		Serial.print(axis.getMotor('X')->getTargetPosition(), 10);
-	} else {
-		Serial.println("X motor not found!");
-	}
 }
 
+unsigned long lastCmdLoopMs = 0;
+unsigned long ms;
 void loop () {
-	axis.tick();
+	axis.tick(ms = micros());
 
-	if (!axis.moving()) {
-		penStepperX.disable();
-		penStepperY.disable();
-		penServo.disable();
+	if (!axis.moving() || ms - lastCmdLoopMs >= 5000 ) {
+		commandLoop();
+
+		lastCmdLoopMs = ms;
 	}
 } 

@@ -1,7 +1,7 @@
 #ifndef __HPP_POSITION
 #define __HPP_POSITION
 
-typedef struct PositionNode{
+typedef struct PositionNode {
     char axis;
     Milimeter position; 
     struct PositionNode* next = nullptr;
@@ -11,6 +11,7 @@ class Position {
     PositionNode* positions = nullptr;
 
 public:
+    ~Position();
     void setAxis(char axis, Milimeter position);
     Milimeter getAxis(char axis);
     bool delAxis(char axis);

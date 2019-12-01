@@ -1,6 +1,15 @@
 #include "motor/Motor.hpp"
 #include "Position.hpp"
 
+Position::~Position() {
+     PositionNode* curr = positions;
+
+    while (curr != nullptr) {
+        delete curr;
+        curr = curr->next;
+    }
+}
+
 void Position::setAxis(char axis, Milimeter position) {
     PositionNode* curr = positions;
 
