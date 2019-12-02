@@ -76,7 +76,7 @@ void parseCommand(String command, Milimeter speed = 20) {
 		} else if (c == 'U') {
 			position->setAxis('Z', 0);
 		} else if (c == 'D') {
-			position->setAxis('Z', 7);
+			position->setAxis('Z', 3.25);
 		} else if (c >= 'A' && c <= 'Z') {
 			position->setAxis(curAxis = c, 0);
 		} else if (c == '.') {
