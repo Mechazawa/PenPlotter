@@ -53,7 +53,7 @@ while c:
 
         if 'OK' in response and 'FULL' in response:
             ok = response.rindex('OK')
-            fail = response.rindex('FAIL')
+            fail = response.rindex('FULL')
 
             if fail > ok:
                 expectResponse('POP')
