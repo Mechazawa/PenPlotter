@@ -10,10 +10,11 @@ class PenStepper : public Motor {
     unsigned char directionPin;
     unsigned char enablePin;
     unsigned short stepsPerMM;
+    unsigned short missedSteps = 0;
     Milimeter travelSpeed = 10;
 
     unsigned char currentDirection = 0;
-    unsigned long lastStep;
+    unsigned long lastStep = 0;
     unsigned char lastWrite = 0;
 
 public:
@@ -25,8 +26,10 @@ public:
     Milimeter getSpeed() override;
     void setSpeed(Milimeter speed) override;
     unsigned int getStepsLeft();
+    unsigned short getMissedSteps();
+    void resetMissedSteps();
 
-    void tick(unsigned long ms) override;
+    void tick(const unsigned long ms) override;
 
     void home() override;
     bool homed() override;

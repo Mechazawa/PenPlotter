@@ -53,9 +53,9 @@ void setupMotors(bool home = true) {
 }
 
 // const char* moves = "U;X16 Y23;D;X16 Y24;X14. Y25;X12. Y27;X10 Y27;X7. Y27;X5. Y26;X3. Y25;X2 Y23;X1. Y20;X2 Y18;X2. Y16;X3. Y13;X5 Y11;X6. Y10;X8. Y8;X10. Y7;X12 Y5;X14 Y3;X15. Y2;X17. Y3;X19. Y5;X21 Y6;X23 Y8;X25 Y9;X26. Y11;X28 Y13;X29 Y15;X30 Y18;X30 Y20;X29. Y22;X28. Y25;X26. Y26;X24. Y27;X22 Y27;X19. Y27;X17. Y25;X16 Y24;U;X30Y30;";
-const char* moves = "U;X10Y10;D;X30Y30;Y10;X10;U;Y30X0;";
+// const char* moves = "U;X10Y10;D;X30Y30;Y10;X10;U;Y30X0;";
 
-void parseCommand(String command, Milimeter speed = 20) {
+void parseCommand(String command, Milimeter speed = 13) {
 	Serial.print("INPUT \"");
 	Serial.print(command);
 	Serial.println("\"");
@@ -76,16 +76,32 @@ void parseCommand(String command, Milimeter speed = 20) {
 		} else if (c == 'U') {
 			position->setAxis('Z', 0);
 		} else if (c == 'D') {
-			position->setAxis('Z', 3.25);
+			position->setAxis('Z', 14.8);
 		} else if (c >= 'A' && c <= 'Z') {
 			position->setAxis(curAxis = c, 0);
 		} else if (c == '.') {
 			Milimeter value = position->getAxis(curAxis);
 			position->setAxis(curAxis, value + 0.5);
 		} else if (c == '!') {
-			setupMotors();
+			setupMotors(false);
 		} else if (c == '#') {
 			shutDownMotors();
+		} else if (c == '?') {
+			Serial.print("X: ");
+			Serial.print(axis.getMotor('X')->getPosition(), 10);
+			Serial.print(" (?");
+			Serial.print(penStepperX.getMissedSteps(), 10);
+			Serial.println(")");
+
+			Serial.print("Y: ");
+			Serial.print(axis.getMotor('Y')->getPosition(), 10);
+			Serial.print(" (?");
+			Serial.print(penStepperY.getMissedSteps(), 10);
+			Serial.println(")");
+
+
+			Serial.print("Z: ");
+			Serial.println(axis.getMotor('Z')->getPosition(), 10);
 		}
 	}
 
@@ -101,42 +117,6 @@ void parseCommand(String command, Milimeter speed = 20) {
 	Serial.print(axis.getMaxStackSize() - axis.getStackSize(), 10);
 	Serial.print("/");
 	Serial.println(axis.getMaxStackSize(), 10);
-}
-
-void initMoves(Milimeter speed = 20) {
-	Position* position = new Position;
-	int i = 0;
-	char curAxis = 'X';
-
-	while (char c = moves[i++]) {
-		if (c == ';') {
-			if(!axis.pushMove(position, speed)) {
-				delete position;
-
-				Serial.println("FULL");
-
-				return;
-			};
-
-			position = new Position;
-		} else if (c >= '0' && c <= '9') {
-			Milimeter value = position->getAxis(curAxis);
-			
-			value *= 10;
-			value += c - '0';
-
-			position->setAxis(curAxis, value);
-		} else if (c == 'U') {
-			position->setAxis('Z', 0);
-		} else if (c == 'D') {
-			position->setAxis('Z', 45);
-		} else if (c >= 'A' && c <= 'Z') {
-			position->setAxis(curAxis = c, 0);
-		} else if (c == '.') {
-			Milimeter value = position->getAxis(curAxis);
-			position->setAxis(curAxis, value + 0.5);
-		}
-	}
 }
 
 String commandLoopInput;
@@ -174,7 +154,7 @@ unsigned long ms;
 void loop () {
 	axis.tick(ms = micros());
 
-	if (!axis.moving() || ms - lastCmdLoopMs >= 5000 ) {
+	if (ms - lastCmdLoopMs >= 10000) {
 		commandLoop();
 
 		lastCmdLoopMs = ms;

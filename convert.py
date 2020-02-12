@@ -7,8 +7,8 @@ if len(sys.argv) < 2:
     print("Missing file argument")
     sys.exit(1)
 
-width = 55
-height = 55
+width = 45
+height = 65
 
 def normalize(x):
     x = round(x * 2) / 2
@@ -18,13 +18,13 @@ def normalize(x):
     
     return str(int(round(x)))
 
-high = low = 0
+lowX = lowY = factorX = factorY = factor = 0
 
 def parseGroup(coordinates):
     coordinates = [
         [
-            normalize((coord[0] - low) * (width / high)),
-            normalize(height - ((coord[1] - low) * (height / high))),
+            ((coord[0] - lowX) * factor),
+            ((coord[1] - lowY) * factor),
         ]
         for coord in coordinates]
 
@@ -32,6 +32,7 @@ def parseGroup(coordinates):
     lastY = -1
     output = ""
     penDown = False
+    count = 0
 
     for coord in coordinates:
         endLine = False
@@ -39,19 +40,23 @@ def parseGroup(coordinates):
         if lastX != coord[0]:
             lastX = coord[0]
             endLine = True
-            output += 'X' + coord[0]
+            output += 'X' + normalize(coord[0])
 
         if lastY != coord[1]:
             lastY = coord[1]
             endLine = True
-            output += 'Y' + coord[1]
+            output += 'Y' + normalize(coord[1])
 
         if endLine:
+            count += 1
             output += ';\n'
         
             if not penDown:
                 penDown = True
                 output += 'D;\n'
+
+    if count < 2:
+        return ''
 
     return output + 'U;\n'
 
@@ -61,10 +66,14 @@ with open(sys.argv[1], 'r') as f:
             [float(coord) for coord in str(line).strip().split(',')] if '#' not in line else 'BREAK'
         for line in f.readlines()]
 
-flatCoord = [y for x in coordinates for y in x if x != 'BREAK'] 
+flatCoordX = [coord[0] for coord in coordinates if coord != 'BREAK']
+flatCoordY = [coord[1] for coord in coordinates if coord != 'BREAK']
 
-low = min(flatCoord)
-high = max(flatCoord) - low
+lowX = min(flatCoordX)
+lowY = min(flatCoordY)
+factorX = width / (max(flatCoordX) - lowX)
+factorY = height / (max(flatCoordY) - lowY)
+factor = factorX if abs(factorX - 1) > abs(factorY - 1) else factorY
 
 print("U;\n")
 cluster = []

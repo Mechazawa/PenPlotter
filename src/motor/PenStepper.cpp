@@ -41,7 +41,15 @@ void PenStepper::setSpeed(Milimeter speed) {
     travelSpeed = speed > 0 ? speed : 0;
 }
 
-void PenStepper::tick(unsigned long ms) {
+unsigned short PenStepper::getMissedSteps() {
+    return missedSteps;
+}
+
+void PenStepper::resetMissedSteps() {
+    missedSteps = 0;
+}
+
+void PenStepper::tick(const unsigned long ms) {
     if(!enabled()) {
         return;
     }
@@ -49,7 +57,8 @@ void PenStepper::tick(unsigned long ms) {
     unsigned int stepsLeft = getStepsLeft();
 
     if (stepsLeft == 0) {
-        targetPosition = steps / stepsPerMM;
+        lastStep = 0;
+        targetPosition = getPosition();
         return;
     }
 
@@ -57,8 +66,36 @@ void PenStepper::tick(unsigned long ms) {
     unsigned int stepDelay = 1000000 / (travelSpeed * stepsPerMM);
 
     if (targetDirection == currentDirection) {
-        if (ms - lastStep >= stepDelay / 2) {
+        unsigned short timeElapsed = ms - lastStep;
+
+        if (timeElapsed >= stepDelay) {
             digitalWrite(stepPin, lastWrite = !lastWrite);
+
+            if (lastStep > 0) {
+                unsigned short missed = floor(timeElapsed / stepDelay) - 1;
+
+                // @todo better catchup
+                switch(missed) {
+                    case 5:
+                    delayMicroseconds(5);
+                    digitalWrite(stepPin, lastWrite = !lastWrite);
+                    case 4:
+                    delayMicroseconds(5);
+                    digitalWrite(stepPin, lastWrite = !lastWrite);
+                    case 3:
+                    delayMicroseconds(5);
+                    digitalWrite(stepPin, lastWrite = !lastWrite);
+                    case 2:
+                    lastStep = ms + stepDelay / 3;
+                    break;
+                    case 1:
+                    lastStep = ms + stepDelay / 2;
+                    break;
+                }
+
+                missedSteps += missed;
+            }
+
             lastStep = ms;
 
             if (currentDirection) {

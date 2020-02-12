@@ -34,7 +34,7 @@ public:
     bool getInverted();
     void setInverted(bool target);
 
-    void tick(unsigned long ms) override;
+    void tick(const unsigned long ms) override;
 
     void home() override;
     bool homed() override;

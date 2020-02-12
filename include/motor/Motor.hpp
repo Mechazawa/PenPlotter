@@ -11,7 +11,7 @@ public:
     virtual Milimeter getSpeed();
     virtual void setSpeed(Milimeter speed);
 
-    virtual void tick(unsigned long ms);
+    virtual void tick(const unsigned long ms);
 
     virtual void home();
     virtual bool homed();

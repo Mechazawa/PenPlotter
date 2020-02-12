@@ -53,7 +53,7 @@ void PenServo::setAngle(int targetAngle) {
     servo.write(angle = targetAngle);
     lastMove = micros();
     // @todo hack
-    delay(500);
+    delay(200);
 }
 
 int PenServo::getMaxAngle() {
@@ -100,7 +100,7 @@ void PenServo::setSpeed(Milimeter speed) {
     // no-op
 }
 
-void PenServo::tick(unsigned long ms) {
+void PenServo::tick(const unsigned long ms) {
     // no-op
 }
 
